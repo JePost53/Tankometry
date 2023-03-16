@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class WeaponTypes
-{
-    public string Name;
+//public class WeaponTypes
+//{
+//    public string Name;
 
-}
+//}
 
 public class WeaponTypesScript : MonoBehaviour
 {
