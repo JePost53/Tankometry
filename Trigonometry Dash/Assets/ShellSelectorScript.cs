@@ -14,17 +14,22 @@ public class ShellSelectorScript : MonoBehaviour
     public float totalChildHeight = 0;
     public GameObject selectedButton;
 
+    public GameObject gameManager;
+
+
     // Start is called before the first frame update
     void Start()
     {
-        
+        gameManager = GameObject.Find("_GameManager");
     }
+
 
     // Update is called once per frame
     void Update()
     {
         UIOrganizer();
     }
+
 
     public void ToggleShellPanel()
     {
@@ -38,6 +43,7 @@ public class ShellSelectorScript : MonoBehaviour
             shellPanel.SetActive(false);
         }
     }
+
 
     void UIOrganizer()
     {
@@ -78,10 +84,10 @@ public class ShellSelectorScript : MonoBehaviour
         }
     }
 
+
     public void ShellSelected(GameObject button)
     {
-        //Debug.Log("BUTTON!!!!!!!");
-        
+         // Put the currently selected shell away
         if(equationBox.GetComponentInChildren<ShellUISizer>() && selectedButton != null)
         {
             GameObject selectedShell = equationBox.GetComponentInChildren<ShellUISizer>().gameObject;
@@ -97,8 +103,6 @@ public class ShellSelectorScript : MonoBehaviour
         selectedButton = button;
 
         shellPanel.SetActive(false);
-
-        GameObject gameManager = GameObject.Find("_GameManager");
 
         gameManager.GetComponent<GameManagerScript>().CallLineGenerator();
     }

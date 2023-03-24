@@ -6,19 +6,22 @@ using UnityEngine.UI;
 public class ShellUISizer : MonoBehaviour
 {
     public float defaultWidth;
-    public float defaultHeight; 
+    public float defaultHeight;
+
+     // Offset values for the size of the main container (the shellUI)
+    public float size_widthOffset = 0;
+    public float size_heightOffset = 10;
+
 
     public float totalChildWidth = 0;
     public float largestChildHeight = 0;
     public float childrenCount = 0;
 
-    public float shadeSpread = 0.1f; //The difference in the color of each layer (nesting) of boxes
+    public float shadeSpread = 0.1f;    // The difference in the color of each layer (nesting) of boxes
     public float spacing;
 
-    public string type; //NOTES FOR LATER: possible types: "Container" "Operator" "Constant" "Variable" "Input"
-    public string operatortype; //NOTES FOR LATER: possible types: "Addition/Subtraction" "Multiplication" "Division" "Exponent" "Root" "Absolute Value"
-
-    //public GameObject parent;
+    public string type;                 // Possible types: "Container" "Operator" "Constant" "Variable" "Input"
+    public string operatortype;         // Possible types: "Addition/Subtraction" "Multiplication" "Division" "Exponent" "Root" "Absolute Value"
 
     void Update()
     {
@@ -28,80 +31,86 @@ public class ShellUISizer : MonoBehaviour
 
     public void SizerFunction()
     {
-        childrenCount = 0; //transform.childCount;      //Number of children the box has
-        var parentB = GetComponent<RectTransform>(); //Parent
+        childrenCount = 0;      // Number of children the box has
+        var parentRect = GetComponent<RectTransform>(); //Parent
 
-        totalChildWidth = 0; //Total width of all child objects
-        largestChildHeight = 0; //The height of the child with the largest height
+        totalChildWidth = 0;    // Total width of all child objects
+        largestChildHeight = 0; // The height of the child with the largest height
 
-        foreach(RectTransform child in parentB)
+        foreach(RectTransform child in parentRect)
         {
             if (child != gameObject && child.tag == "ComponentBox")
             {
-                childrenCount ++;
+                childrenCount++;
 
                 float childWidth = child.sizeDelta.x * child.localScale.x;
 
-                totalChildWidth += childWidth; //Adds the width of each child to the total width of all the children
+                totalChildWidth += childWidth;                  // Adds the width of each child to the total width of all the children
 
-                if (child.sizeDelta.y > largestChildHeight) //Whether this child has a bigger height than the current highest recorded height
+                if (child.sizeDelta.y > largestChildHeight)     // Whether this child has a bigger height than the current highest recorded height
                 {
-                largestChildHeight = child.sizeDelta.y; //Sets the new largest child height
+                    largestChildHeight = child.sizeDelta.y;     // Sets the new largest child height
                 }
 
-                child.GetComponent<Image>().color = new Color(0, child.parent.GetComponent<Image>().color.g - shadeSpread, 0); //Colors children a darker shade than their parent (to give layering effect for nesting)
+                 // Colors children a darker shade than their parent (to give layering effect for nesting)
+                child.GetComponent<Image>().color = new Color(0, child.parent.GetComponent<Image>().color.g - shadeSpread, 0);
             }
         }
 
+         // If there are no children, then set to the default height (maybe clamp would be better for this?)
         float noChildrenBoolNumber = 1;
         if(childrenCount>=1)
-        {
             noChildrenBoolNumber = 0;
-        }
         else
-        {
             noChildrenBoolNumber = 1;
-        }
 
-        parentB.sizeDelta = new Vector2((defaultWidth*noChildrenBoolNumber + totalChildWidth + spacing * (childrenCount + 1)), defaultHeight*noChildrenBoolNumber + largestChildHeight + 10);
+         // Sets the size of the parent (this object)
+        float xSize = defaultWidth*noChildrenBoolNumber + totalChildWidth + spacing * (childrenCount + 1) + size_widthOffset;
+        float ySize = defaultHeight*noChildrenBoolNumber + largestChildHeight + size_heightOffset;
+        parentRect.sizeDelta = new Vector2(xSize, ySize);
 
-        //if (parent.GetComponent<ComponentBox>())
-        //{
+
         GameObject parentC = transform.parent.gameObject;
+        ComponentBox parentComponentBox = parentC.GetComponent<ComponentBox>();
 
         //Debug.Log("parent: " + parentC + "getComponentType : " + parentC.GetComponent<ComponentBox>().type);
 
-        if (parentC.GetComponent<ComponentBox>())
+        if (parentComponentBox && parentComponentBox.type == ComponentBox.Type.Container && parentComponentBox.operatorType == ComponentBox.OperatorType.Exponent)
         {
-            if (parentC.GetComponent<ComponentBox>().type == ComponentBox.Type.Container && parentC.GetComponent<ComponentBox>().operatorType == ComponentBox.OperatorType.Exponent)
+            //Debug.Log("Child: " + transform.name + " | Second child of parent : " + transform.parent.GetComponentsInChildren<ComponentBox>()[2]);
+            if (gameObject.transform.GetSiblingIndex() + 1 == parentC.transform.childCount)  //transform.parent.GetComponentsInChildren<ComponentBox>()[2] == gameObject.GetComponent<ComponentBox>())
             {
-                //Debug.Log("Child: " + transform.name + " | Second child of parent : " + transform.parent.GetComponentsInChildren<ComponentBox>()[2]);
-                if (gameObject.transform.GetSiblingIndex() + 1 == parentC.transform.childCount)  //transform.parent.GetComponentsInChildren<ComponentBox>()[2] == gameObject.GetComponent<ComponentBox>())
-                {
-                    gameObject.GetComponent<RectTransform>().localScale = new Vector3(0.5f, 0.5f, 1);
-                }
+                gameObject.GetComponent<RectTransform>().localScale = new Vector3(0.5f, 0.5f, 1);
             }
-        }
-        //}
+        }  
 
         float posRender = 0;
         float tick = 1;
 
-        foreach(RectTransform child in parentB)
+         // Positions all the children component boxes and places them inside of each other accordingly
+        foreach(RectTransform child in parentRect)
         {
             if (child != gameObject && child.tag == "ComponentBox")
             {
-                child.GetComponent<RectTransform>().anchoredPosition = new Vector2(-posRender - spacing * tick - child.sizeDelta.x * child.localScale.x / 2 + parentB.sizeDelta.x / 2, 0); //x is negative to make it go left to right ingame and top down in hierarchy
+                float xPos = -posRender - spacing * tick - child.sizeDelta.x * child.localScale.x / 2 + parentRect.sizeDelta.x / 2;
 
-                if (child.transform.parent.gameObject.GetComponent<ComponentBox>())
+                // if we are the top guy (the shellUI), make sure to offset the inner box a bit so it's not exactly in the middle
+                if (parentC.GetComponent<ShellUISizer>() == null)
+                    xPos -= 13;
+                
+                child.GetComponent<RectTransform>().anchoredPosition = new Vector2(xPos, 0); // x is negative to make it go left to right ingame and top down in hierarchy
+
+                ComponentBox childComponentBox = child.transform.parent.gameObject.GetComponent<ComponentBox>();
+
+                 // If this child box is an exponent operator, then move it to the corner accordingly
+                if (childComponentBox
+                && childComponentBox.type == ComponentBox.Type.Container 
+                && childComponentBox.operatorType == ComponentBox.OperatorType.Exponent)
                 {
-                    if (child.transform.parent.gameObject.GetComponent<ComponentBox>().type == ComponentBox.Type.Container && child.transform.parent.gameObject.GetComponent<ComponentBox>().operatorType == ComponentBox.OperatorType.Exponent)
+                    //Debug.Log("Child name : " + child.name + " | Child Index : " + child.transform.GetSiblingIndex() + " | Parent Child Count : " + child.transform.parent.childCount);
+                    if (child.transform.GetSiblingIndex() + 1 == child.transform.parent.childCount) //transform.GetComponentsInChildren<ComponentBox>()[2] == child.gameObject.GetComponent<ComponentBox>())
                     {
-                        //Debug.Log("Child name : " + child.name + " | Child Index : " + child.transform.GetSiblingIndex() + " | Parent Child Count : " + child.transform.parent.childCount);
-                        if (child.transform.GetSiblingIndex() + 1 == child.transform.parent.childCount) //transform.GetComponentsInChildren<ComponentBox>()[2] == child.gameObject.GetComponent<ComponentBox>())
-                        {
-                            child.GetComponent<RectTransform>().anchoredPosition = new Vector2(-posRender - spacing * tick - child.sizeDelta.x * child.localScale.x / 2 + parentB.sizeDelta.x / 2, parentB.sizeDelta.y * 0.15f); //(Might need tweaking)
-                        }
+                        child.GetComponent<RectTransform>().anchoredPosition = new Vector2(xPos, parentRect.sizeDelta.y * 0.15f); // (Might need tweaking)
                     }
                 }
 

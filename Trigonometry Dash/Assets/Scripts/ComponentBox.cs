@@ -16,6 +16,7 @@ public class ComponentBox : MonoBehaviour
     public Type type;
     public float value;
     public bool hasSolved;
+    public bool flipsSignWithX; // Does this container flip sign when x flips sign (when turret turns around) ?
 
     public enum OperatorType
     {

@@ -1,11 +1,11 @@
-﻿using B83.ExpressionParser;
+﻿//using B83.ExpressionParser;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using UnityEditor;
+//using System.Linq;
+//using System.Linq.Expressions;
+//using System.Text;
+//using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -69,9 +69,31 @@ public class TrajectoryLineScript : MonoBehaviour
     }
     public float equationValue = 0;
 
+
+
+    // ALL OF THE MATH OPERATIONS!!!!
+    // Given an x value, go through all of the equation components in this projectile and perform the necessary operations
+    
+    // How it works:
+    // Search the list of boxes for the deepest box that hasn't been solved (bool "hasSolved" ==false), with a loop
+    // Find the value of deepest box, have different function for types "Container", "Constant", "Variable", "Input", which solve differently
+    // Repeat search for new deepest box, and solve value, and so on, until it finds the value of the big box, which is y
+
+    // (Search for deepest container, in practice it may be the deepest of the first container (if there are two containers on the same level), and then it will go down any other container trails in order) 
+    // Find a container from the list of boxes
+    // Once container found, search it for another container, and so on, with a loop, until the deepest container is found
+    // Find the value of the deepest container, and then set its value variable
+    // Repeat the process of checking for the deepest container
+
     private float ContainerBoxSearch(float x) //, out float y)
     {
         //ComponentBox[] componentBoxes = equationBox.GetComponentsInChildren<ComponentBox>();
+
+        if (equationBox.GetComponentInChildren<ComponentBox>() == null)
+        {
+            Debug.Log("No weapon loaded!!!");
+            return 0;
+        }
 
         topBox = equationBox.GetComponentInChildren<ComponentBox>().gameObject;
 
@@ -167,6 +189,8 @@ public class TrajectoryLineScript : MonoBehaviour
             else if (currentBox.GetComponent<ComponentBox>().type == ComponentBox.Type.Variable)
             {
                 currentBox.GetComponent<ComponentBox>().value = x;
+                if (currentBox.GetComponent<ComponentBox>().flipsSignWithX && x > 0)
+                    currentBox.GetComponent<ComponentBox>().value *= -1;
                 //Debug.Log("CurrentBox is Variable! Value is" + currentBox.GetComponent<ComponentBox>().value);
             }
             currentBox.GetComponent<ComponentBox>().hasSolved = true;
@@ -189,7 +213,8 @@ public class TrajectoryLineScript : MonoBehaviour
             {
                 if (child.GetComponent<ComponentBox>().type == ComponentBox.Type.Operator) //If the box is an operator
                 {
-                    operatorType = child.GetComponent<ComponentBox>().operatorType; //Sets operator type to the type of operator, determines addition or subtraction for the next number
+                     // Sets operator type to the type of operator, determines addition or subtraction for the next number
+                    operatorType = child.GetComponent<ComponentBox>().operatorType;
                     //Debug.Log("Child " + child.name + " is OPERATOR! OperatorType is now : " + operatorType + " because child" + child.name + " is " + child.GetComponent<ComponentBox>().operatorType);
                 }
                 else //else if(child.type == ComponentBox.Type.Constant)
@@ -241,15 +266,8 @@ public class TrajectoryLineScript : MonoBehaviour
         return totalValue;
     }
 
-    //Search the list of boxes for the deepest box that hasn't been solved (bool "hasSolved" ==false), with a loop
-    //Find the value of deepest box, have different function for types "Container", "Constant", "Variable", "Input", which solve differently
-    //Repeat search for new deepest box, and solve value, and so on, until it finds the value of the big box, which is y
 
-    //(Search for deepest container, in practice it may be the deepest of the first container (if there are two containers on the same level), and then it will go down any other container trails in order) 
-    //Find a container from the list of boxes
-    //Once container found, search it for another container, and so on, with a loop, until the deepest container is found
-    //Find the value of the deepest container, and then set its value variable
-    //Repeat the process of checking for the deepest container
+
 
     private void FindString() //Obsolete??
     {
@@ -306,7 +324,7 @@ public class TrajectoryLineScript : MonoBehaviour
     {
         lineCoords = new Vector3[lRend.positionCount];
         lRend.GetPositions(lineCoords);
-        if (lineCoords.Length >= 5)
+        if (lineCoords.Length > 5)
         {
             Vector3 point1 = (lineCoords[1] - lineCoords[5]).normalized; //lineCoords[1]; //barPos.right;
             Vector3 point2 = lineCoords[5];// + hull.transform.position;
@@ -554,7 +572,11 @@ public class TrajectoryLineScript : MonoBehaviour
     }
 }
  
- 
+
+// A sample class from the interwebs that was designed to interpret string equations and produce a result.
+// This was used during the early stages of developing the trajectory system, but has since been replaced by my own parsing system (literally built into the game via container blocks)
+
+ /*
 namespace B83.ExpressionParser
 {
     public interface IValue
@@ -1095,4 +1117,4 @@ namespace B83.ExpressionParser
 
         public class ParseException : System.Exception { public ParseException(string aMessage) : base(aMessage) { } }
     }
-}
+}*/

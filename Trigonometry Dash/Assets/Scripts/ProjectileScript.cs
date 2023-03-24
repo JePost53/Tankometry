@@ -131,7 +131,7 @@ public class ProjectileScript : MonoBehaviour
                 if (nearObject != transform.gameObject)
                 {
                     Vector2 dir = nearObject.transform.position - transform.position;
-                    float distance = Vector2.Distance(nearObject.transform.position, transform.position);
+                    float distance = Mathf.Clamp(Vector2.Distance(nearObject.transform.position, transform.position), 0.5f, 100);
 
                     Rigidbody2D rb = nearObject.GetComponent<Rigidbody2D>();
                     if (rb != null)
